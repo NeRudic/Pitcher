@@ -20,6 +20,9 @@ dist/
 .vscode/
 .idea/
 
+# Generated test data (run preprocess.py to regenerate)
+tests/data/
+
 # OS
 .DS_Store
 Thumbs.db
