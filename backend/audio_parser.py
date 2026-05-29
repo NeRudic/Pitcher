@@ -9,7 +9,7 @@ Basic Pitch 0.4.0 returns:
 from basic_pitch.inference import predict
 from basic_pitch import ICASSP_2022_MODEL_PATH
 
-from config import MIDI_NOTE_MIN, MIDI_NOTE_MAX
+from config import MIDI_NOTE_MIN, MIDI_NOTE_MAX, MIN_AMPLITUDE
 from models import NoteEvent
 
 
@@ -32,6 +32,9 @@ def parse_audio(file_path: str) -> list[NoteEvent]:
     # In Basic Pitch 0.4.0, note_events is a list of tuples:
     # (start_time_sec, end_time_sec, pitch_midi, amplitude, pitch_bend)
     for start, end, pitch, amplitude, _bend in note_events:
+        # Skip low-amplitude detections — likely artifacts / noise
+        if float(amplitude) < MIN_AMPLITUDE:
+            continue
         pitch = float(pitch)
         if MIDI_NOTE_MIN <= pitch <= MIDI_NOTE_MAX:
             notes.append(NoteEvent(

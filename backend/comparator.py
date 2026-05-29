@@ -13,10 +13,8 @@ Algorithm:
        - "late" if played note start > reference start + tolerance
        - "early" if played note start < reference start - tolerance
     4. An unmatched reference note is "missed".
+    5. Unmatched played notes (above amplitude threshold) are "wrong".
 """
-
-# Note: unmatched played notes (potential Basic Pitch artifacts) are
-# intentionally ignored — they are not included in the results.
 
 
 from config import PITCH_TOLERANCE_SEMITONES, TIMING_TOLERANCE_MS
@@ -94,6 +92,20 @@ def compare_notes(
                 status="missed",
             ))
 
+    # Add wrong notes — played notes above amplitude threshold that
+    # didn't match any reference (real wrong notes, not artifacts).
+    for i, pl in enumerate(played):
+        if i not in used_played:
+            results.append(NoteComparisonResult(
+                reference_pitch=-1,  # no reference
+                reference_start=-1,
+                reference_end=-1,
+                status="wrong",
+                played_pitch=pl.pitch,
+                played_start=pl.start_time,
+                time_delta_ms=None,
+            ))
+
     return results
 
 
@@ -122,8 +134,8 @@ def build_comparison_summary(
     for r in note_results:
         counts[r.status] = counts.get(r.status, 0) + 1
 
-    # Count matched played notes (exclude artifacts from Basic Pitch)
-    matched_played = counts["correct"] + counts["late"] + counts["early"]
+    # Count matched + wrong played notes (artifacts already filtered by amplitude)
+    matched_played = counts["correct"] + counts["late"] + counts["early"] + counts["wrong"]
 
     return {
         "total_reference_notes": len(reference),

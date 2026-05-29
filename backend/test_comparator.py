@@ -61,7 +61,7 @@ def test_early_note():
 
 
 def test_pitch_tolerance():
-    """A note off by 1 semitone should NOT match (strict pitch)."""
+    """A note off by 1 semitone (>0.5 tolerance) should be 'missed' + 'wrong'."""
     reference = [
         NoteEvent(pitch=60, start_time=1.0, end_time=2.0, velocity=80),  # C4
     ]
@@ -69,8 +69,10 @@ def test_pitch_tolerance():
         NoteEvent(pitch=61, start_time=1.02, end_time=1.98),  # C#4 — 1 semitone off
     ]
     results = compare_notes(reference, played)
-    assert len(results) == 1
-    assert results[0].status == "missed", f"Expected missed, got {results[0].status}"
+    assert len(results) == 2  # missed + wrong
+    statuses = {r.status for r in results}
+    assert "missed" in statuses
+    assert "wrong" in statuses
     print("[PASS] test_pitch_tolerance passed")
 
 
@@ -83,10 +85,10 @@ def test_pitch_out_of_tolerance():
         NoteEvent(pitch=62, start_time=1.02, end_time=1.98),  # D4 — 2 semitones off
     ]
     results = compare_notes(reference, played)
-    # Played note is ignored (no matching reference — likely artifact)
-    # Only the unmatched reference note is reported
-    assert len(results) == 1
-    assert results[0].status == "missed"
+    assert len(results) == 2  # missed + wrong
+    statuses = {r.status for r in results}
+    assert "missed" in statuses
+    assert "wrong" in statuses
     print("[PASS] test_pitch_out_of_tolerance passed")
 
 
@@ -103,13 +105,15 @@ def test_quarter_tone_tolerance():
     assert len(results) == 1
     assert results[0].status == "correct", f"0.5 should match, got {results[0].status}"
 
-    # 0.6 semitones off — outside tolerance
+    # 0.6 semitones off — outside tolerance, should be missed + wrong
     played_out = [
         NoteEvent(pitch=60.6, start_time=1.02, end_time=1.98),
     ]
     results = compare_notes(reference, played_out)
-    assert len(results) == 1
-    assert results[0].status == "missed", f"0.6 should miss, got {results[0].status}"
+    assert len(results) == 2
+    statuses = {r.status for r in results}
+    assert "missed" in statuses
+    assert "wrong" in statuses
 
     print("[PASS] test_quarter_tone_tolerance passed")
 
