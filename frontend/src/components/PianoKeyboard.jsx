@@ -35,7 +35,7 @@ function noteName(midiNote) {
   return `${name}${octave}`;
 }
 
-export default function PianoKeyboard({ noteResults = [], highlightMap = null }) {
+export default function PianoKeyboard({ noteResults = [], highlightMap = null, referenceActiveMap = null }) {
   // Build a map from MIDI pitch → status for quick lookup
   const statusMap = useMemo(() => {
     if (highlightMap) return highlightMap;
@@ -83,10 +83,12 @@ export default function PianoKeyboard({ noteResults = [], highlightMap = null })
     <div className="piano-container">
       <div className="piano-keyboard">
         {/* White keys */}
-        {whiteKeys.map((key, i) => (
+        {whiteKeys.map((key, i) => {
+          const isRefActive = referenceActiveMap && referenceActiveMap[key.midi];
+          return (
           <div
             key={key.midi}
-            className={`piano-key white-key ${key.status ? 'highlighted' : ''}`}
+            className={`piano-key white-key ${key.status ? 'highlighted' : ''} ${isRefActive ? 'ref-active' : ''}`}
             style={{
               width: `${100 / totalWhiteKeys}%`,
               left: `${(100 / totalWhiteKeys) * i}%`,
@@ -94,12 +96,16 @@ export default function PianoKeyboard({ noteResults = [], highlightMap = null })
                 ? STATUS_COLORS[key.status]
                 : '#ffffff',
               borderColor: key.status ? 'rgba(0,0,0,0.3)' : '#333',
+              boxShadow: isRefActive
+                ? 'inset 0 0 0 4px #2196f3, inset 0 0 0 5px rgba(255,255,255,0.8)'
+                : undefined,
             }}
-            title={`${key.noteLabel}${key.status ? ` — ${key.status}` : ''}`}
+            title={`${key.noteLabel}${key.status ? ` — ${key.status}` : ''}${isRefActive ? ' [reference]' : ''}`}
           >
             <span className="key-label">{key.noteLabel}</span>
           </div>
-        ))}
+          );
+        })}
 
         {/* Black keys */}
         {blackKeys.map((key) => {
@@ -113,10 +119,11 @@ export default function PianoKeyboard({ noteResults = [], highlightMap = null })
             (wk) => wk.midi === key.midi + 1
           ) - 1;
 
+          const isRefActive = referenceActiveMap && referenceActiveMap[key.midi];
           return (
             <div
               key={key.midi}
-              className={`piano-key black-key ${key.status ? 'highlighted' : ''}`}
+              className={`piano-key black-key ${key.status ? 'highlighted' : ''} ${isRefActive ? 'ref-active' : ''}`}
               style={{
                 width: `${(100 / totalWhiteKeys) * 0.65}%`,
                 left: `${(100 / totalWhiteKeys) * (idx + 0.675)}%`,
@@ -124,8 +131,12 @@ export default function PianoKeyboard({ noteResults = [], highlightMap = null })
                   ? STATUS_COLORS[key.status]
                   : '#1a1a1a',
                 borderColor: key.status ? 'rgba(255,255,255,0.3)' : '#000',
+                boxShadow: isRefActive
+                  ? '0 0 0 3px #2196f3, 0 0 12px rgba(33,150,243,0.6)'
+                  : undefined,
+                zIndex: isRefActive ? 3 : undefined,
               }}
-              title={`${key.noteLabel}${key.status ? ` — ${key.status}` : ''}`}
+              title={`${key.noteLabel}${key.status ? ` — ${key.status}` : ''}${isRefActive ? ' [reference]' : ''}`}
             />
           );
         })}
@@ -142,6 +153,17 @@ export default function PianoKeyboard({ noteResults = [], highlightMap = null })
             <span className="legend-label">{status}</span>
           </div>
         ))}
+        <div className="legend-item">
+          <span
+            className="legend-color"
+            style={{
+              backgroundColor: '#fff',
+              border: '3px solid #2196f3',
+              boxSizing: 'border-box',
+            }}
+          />
+          <span className="legend-label">reference</span>
+        </div>
       </div>
     </div>
   );

@@ -74,6 +74,26 @@ export default function App() {
     return null;
   }, [results, currentTime, playbackActive, playbackComplete]);
 
+  // --- Compute reference notes active at currentTime (for playback) ---
+  const referenceActiveMap = useMemo(() => {
+    if (!results || !results.notes) return null;
+    if (!playbackActive || playbackComplete) return null;
+
+    const map = {};
+    const t = currentTime;
+    for (const c of results.notes) {
+      if (
+        c.reference_start != null &&
+        c.reference_end != null &&
+        c.reference_start <= t &&
+        c.reference_end >= t
+      ) {
+        map[c.reference_pitch] = true;
+      }
+    }
+    return Object.keys(map).length > 0 ? map : null;
+  }, [results, currentTime, playbackActive, playbackComplete]);
+
   // --- requestAnimationFrame loop ---
   useEffect(() => {
     if (!isPlaying || !audioRef.current) return;
@@ -243,6 +263,7 @@ export default function App() {
           <PianoKeyboard
             noteResults={results.notes || []}
             highlightMap={activeHighlightMap}
+            referenceActiveMap={referenceActiveMap}
           />
         )}
       </main>
