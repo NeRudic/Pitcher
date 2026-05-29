@@ -46,14 +46,6 @@ export default function App() {
         if (note.reference_start >= 0 && note.reference_start <= t && note.reference_end >= t) {
           map[note.reference_pitch] = note.status;
         }
-        // Wrong notes (played, no reference) — use played timing
-        if (note.status === 'wrong' && note.played_start >= 0 && note.played_start <= t && note.reference_end >= t) {
-          // reference_end is -1 for wrong notes, we approximate end = played_start + 0.5s
-          const wrongEnd = (note.reference_end > 0) ? note.reference_end : note.played_start + 0.5;
-          if (note.played_start <= t && wrongEnd >= t) {
-            map[note.played_pitch] = note.status;
-          }
-        }
       }
 
       return Object.keys(map).length > 0 ? map : {};

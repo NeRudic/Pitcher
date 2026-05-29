@@ -13,8 +13,11 @@ Algorithm:
        - "late" if played note start > reference start + tolerance
        - "early" if played note start < reference start - tolerance
     4. An unmatched reference note is "missed".
-    5. Unmatched played notes are "wrong".
 """
+
+# Note: unmatched played notes (potential Basic Pitch artifacts) are
+# intentionally ignored — they are not included in the results.
+
 
 from config import PITCH_TOLERANCE_SEMITONES, TIMING_TOLERANCE_MS
 from models import NoteComparisonResult, NoteEvent
@@ -89,19 +92,6 @@ def compare_notes(
                 reference_start=ref.start_time,
                 reference_end=ref.end_time,
                 status="missed",
-            ))
-
-    # Add wrong notes — played notes that didn't match any reference
-    for i, pl in enumerate(played):
-        if i not in used_played:
-            results.append(NoteComparisonResult(
-                reference_pitch=pl.pitch,
-                reference_start=-1,  # no reference
-                reference_end=-1,
-                status="wrong",
-                played_pitch=pl.pitch,
-                played_start=pl.start_time,
-                time_delta_ms=None,
             ))
 
     return results
