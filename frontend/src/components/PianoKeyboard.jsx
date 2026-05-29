@@ -36,15 +36,25 @@ function noteName(midiNote) {
 }
 
 export default function PianoKeyboard({ noteResults = [], highlightMap = null, referenceActiveMap = null }) {
-  // Build a map from MIDI pitch → status for quick lookup
+  // Build a map from MIDI pitch → status for quick lookup.
+  //
+  // For most statuses the relevant key is reference_pitch (the note that was
+  // expected).  For "wrong" notes, reference_pitch is -1 (no reference), so
+  // we use played_pitch — the key the user actually pressed by mistake.
+  //
+  // Priority: errors first, then correct, then missed.
+  //   wrong > late > early > correct > missed
+  // "missed" is the lowest priority so that a note played correctly in one
+  // chord but missed in another (Basic Pitch can't always separate every
+  // voice) still shows as green rather than gray.
   const statusMap = useMemo(() => {
     if (highlightMap) return highlightMap;
     const map = {};
+    const priority = { wrong: 5, late: 4, early: 3, correct: 2, missed: 1 };
     for (const r of noteResults) {
-      const pitch = r.reference_pitch;
-      // Only overwrite with "worse" status (preserve wrong over correct, etc.)
-      // Priority: wrong > missed > late > early > correct
-      const priority = { wrong: 5, missed: 4, late: 3, early: 2, correct: 1 };
+      // Use played_pitch for wrong notes (reference_pitch is -1)
+      const pitch = r.status === 'wrong' ? r.played_pitch : r.reference_pitch;
+      if (pitch == null || pitch < 21 || pitch > 108) continue;
       if (!map[pitch] || priority[r.status] > priority[map[pitch]]) {
         map[pitch] = r.status;
       }
