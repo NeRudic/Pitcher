@@ -45,7 +45,12 @@ def parse_audio(file_path: str) -> list[NoteEvent]:
                 pitch=pitch,
                 start_time=float(start),
                 end_time=float(end),
+                amplitude=float(amplitude),  # needed for harmonic filtering
             ))
+
+    # Filter out harmonic over-detections — notes that are likely
+    # overtones of louder overlapping notes (octaves, fifths, etc.)
+    notes = _filter_harmonics(notes)
 
     # Deduplicate — merge fragmented notes before comparison
     notes = _deduplicate_notes(notes)
@@ -58,6 +63,56 @@ def parse_audio(file_path: str) -> list[NoteEvent]:
 # Pitch and timing tolerances for deduplication (separate from comparison tolerances)
 _DEDUP_PITCH_TOLERANCE = 1.0   # ±1 semitone — fragments of the same note won't drift far
 _DEDUP_GAP_MS = 50             # max gap between fragments to merge (in milliseconds)
+
+
+# Harmonic intervals that Basic Pitch commonly misdetects as separate notes.
+# When a note's pitch is exactly one of these intervals above a louder
+# overlapping note, it's almost certainly an overtone artifact.
+_HARMONIC_INTERVALS = [12, 19, 24, 7, 5]  # octave, octave+fifth, 2 octaves, fifth, fourth
+_HARMONIC_TOLERANCE = 0.5  # ±quarter-tone tolerance for harmonic match
+
+
+def _filter_harmonics(notes: list[NoteEvent]) -> list[NoteEvent]:
+    """Remove notes that are likely harmonic overtones of louder notes.
+
+    Basic Pitch sometimes detects harmonics (octaves, fifths, etc.) as
+    independent notes, especially for piano audio with rich harmonic content.
+    Since fundamentals are almost always louder than their harmonics, we
+    process notes from loudest to quietest and remove any note that falls
+    on a harmonic interval of an already-kept, overlapping note.
+
+    Args:
+        notes: List of NoteEvent objects with amplitude populated.
+
+    Returns:
+        Filtered list with harmonic artifacts removed.
+    """
+    if len(notes) <= 1:
+        return notes
+
+    # Process loudest first — fundamentals dominate harmonics in amplitude
+    sorted_notes = sorted(notes, key=lambda n: n.amplitude or 0, reverse=True)
+
+    kept: list[NoteEvent] = []
+    for note in sorted_notes:
+        is_harmonic = False
+        for k in kept:
+            # Must overlap in time — harmonics can't exist without the fundamental
+            if note.end_time <= k.start_time or note.start_time >= k.end_time:
+                continue
+
+            pitch_diff = abs(note.pitch - k.pitch)
+            for interval in _HARMONIC_INTERVALS:
+                if abs(pitch_diff - interval) <= _HARMONIC_TOLERANCE:
+                    is_harmonic = True
+                    break
+            if is_harmonic:
+                break
+
+        if not is_harmonic:
+            kept.append(note)
+
+    return kept
 
 
 def _deduplicate_notes(notes: list[NoteEvent]) -> list[NoteEvent]:

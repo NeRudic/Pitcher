@@ -9,6 +9,7 @@ class NoteEvent(BaseModel):
     start_time: float   # note start in seconds
     end_time: float     # note end in seconds
     velocity: int | None = None  # MIDI velocity (0–127), None for audio
+    amplitude: float | None = None  # Basic Pitch confidence (0–1), None for MIDI
 
 
 class NoteComparisonResult(BaseModel):
