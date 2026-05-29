@@ -2,7 +2,11 @@
 
 # Tolerance thresholds for note comparison
 PITCH_TOLERANCE_SEMITONES = 0.5  # quarter-tone tolerance (for fretless instruments)
-TIMING_TOLERANCE_MS = 100      # ±100 milliseconds
+TIMING_TOLERANCE_MS = 100      # ±100 milliseconds — notes within this are "correct"
+MAX_MATCH_WINDOW_MS = 500      # max time distance to consider a note as "the same note"
+# Played notes further than this from a reference are NOT the same note —
+# they are either "missed" (reference) or "wrong" (played).
+# Must be > TIMING_TOLERANCE_MS to allow "late"/"early" detection.
 
 # File constraints
 MAX_AUDIO_SIZE_MB = 50

@@ -7,7 +7,7 @@ Algorithm:
     1. For each reference note, try to find a matching played note.
     2. Match criteria:
        - Pitch within ±PITCH_TOLERANCE_SEMITONES
-       - Timing within ±TIMING_TOLERANCE_MS
+       - Timing within ±MAX_MATCH_WINDOW_MS (to be "the same note")
     3. A reference note with a match is classified as:
        - "correct" if timing delta ≤ TIMING_TOLERANCE_MS
        - "late" if played note start > reference start + tolerance
@@ -17,7 +17,11 @@ Algorithm:
 """
 
 
-from config import PITCH_TOLERANCE_SEMITONES, TIMING_TOLERANCE_MS
+from config import (
+    PITCH_TOLERANCE_SEMITONES,
+    TIMING_TOLERANCE_MS,
+    MAX_MATCH_WINDOW_MS,
+)
 from models import NoteComparisonResult, NoteEvent
 
 
@@ -30,6 +34,10 @@ def compare_notes(
     Uses a greedy matching algorithm: for each reference note, finds the
     closest played note within tolerance that hasn't been matched yet.
 
+    A played note is only considered a candidate for a reference note if
+    it falls within MAX_MATCH_WINDOW_MS — notes further apart are not
+    "the same note played badly", they are different notes entirely.
+
     Args:
         reference: Reference notes from MIDI.
         played: Played notes from audio transcription.
@@ -38,6 +46,7 @@ def compare_notes(
         List of NoteComparisonResult objects describing the comparison.
     """
     timing_tolerance_sec = TIMING_TOLERANCE_MS / 1000.0
+    max_match_window_sec = MAX_MATCH_WINDOW_MS / 1000.0
     used_played: set[int] = set()  # indices of matched played notes
     results: list[NoteComparisonResult] = []
 
@@ -56,6 +65,10 @@ def compare_notes(
 
             # Check timing — how far is the played note from the reference?
             time_delta = pl.start_time - ref.start_time
+
+            # Skip if the note is too far to be considered "the same note"
+            if abs(time_delta) > max_match_window_sec:
+                continue
 
             if abs(time_delta) < abs(best_time_delta):
                 best_time_delta = time_delta
@@ -92,8 +105,7 @@ def compare_notes(
                 status="missed",
             ))
 
-    # Add wrong notes — played notes above amplitude threshold that
-    # didn't match any reference (real wrong notes, not artifacts).
+    # Add wrong notes — played notes that didn't match any reference.
     for i, pl in enumerate(played):
         if i not in used_played:
             results.append(NoteComparisonResult(
