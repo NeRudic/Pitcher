@@ -122,9 +122,12 @@ def build_comparison_summary(
     for r in note_results:
         counts[r.status] = counts.get(r.status, 0) + 1
 
+    # Count matched played notes (exclude artifacts from Basic Pitch)
+    matched_played = counts["correct"] + counts["late"] + counts["early"]
+
     return {
         "total_reference_notes": len(reference),
-        "total_played_notes": len(played),
+        "total_played_notes": matched_played,
         **counts,
         "notes": note_results,
         "played_notes": played,
