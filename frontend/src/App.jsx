@@ -185,7 +185,7 @@ export default function App() {
   }, [handlePlay]);
 
   // --- Derived state ---
-  const showResults = playbackComplete && results;
+  const showResults = !!results;
   const showKeyboard = results && !loading;
 
   return (
@@ -225,7 +225,7 @@ export default function App() {
           />
         )}
 
-        {/* Results — shown after playback completes */}
+        {/* Results — shown after comparison completes */}
         {showResults && (
           <section className="results-section">
             <ResultsPanel results={results} />
