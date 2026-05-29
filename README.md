@@ -19,10 +19,29 @@ Highlights missed, wrong, late, and early notes on a virtual piano keyboard.
 
 ## Requirements
 
-- **Python 3.11** (required by Basic Pitch / TensorFlow)
-- **Node.js 20+** (for frontend)
+- **Docker** (recommended) — no local Python or Node.js needed
+- Or **Python 3.11** + **Node.js 20+** for manual setup
 
-## Quick Start
+## Quick Start (Docker)
+
+```bash
+git clone https://github.com/NeRudic/piano-performance-analyzer.git
+cd Pitcher
+docker compose up --build
+```
+
+Open **http://localhost:8000** in your browser.
+
+> First build takes 5–10 minutes (downloads Python, TensorFlow, Node dependencies).
+> Subsequent starts are instant.
+
+### Stop the container
+
+```bash
+docker compose down
+```
+
+## Manual Start (Windows)
 
 ### One-Click Start (Windows)
 
@@ -123,6 +142,11 @@ Upload audio and MIDI files for comparison.
 Pitcher/
 ├── SPEC.md                 # Technical specification
 ├── README.md               # This file
+├── Dockerfile              # Multi-stage Docker build
+├── docker-compose.yml      # One-command orchestration
+├── docker/                 # Docker runtime configs
+│   ├── nginx.conf          # Nginx reverse proxy + static files
+│   └── entrypoint.sh       # Container startup script
 ├── backend/
 │   ├── requirements.txt    # Python dependencies
 │   ├── main.py             # FastAPI application

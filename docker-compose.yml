@@ -1,0 +1,8 @@
+services:
+  piano-analyzer:
+    build: .
+    image: piano-analyzer:latest
+    container_name: piano-analyzer
+    ports:
+      - "8000:80"
+    restart: unless-stopped

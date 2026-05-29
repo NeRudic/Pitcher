@@ -1,0 +1,49 @@
+# Version control
+.git
+
+# Node
+node_modules
+frontend/dist
+
+# Python
+**/__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+
+# Tests (includes large WAV/MIDI/JSON files — not committed to repo)
+tests
+
+# Windows batch scripts (useless in Linux container)
+**/*.bat
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Audio/MIDI files (anywhere)
+*.wav
+*.mp3
+*.mid
+*.midi
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker/
+
+# Claude Code
+.claude
+
+# Development launcher (not needed in container)
+run.py
+
+# Documentation (not needed in image)
+README.md
+SPEC.md
