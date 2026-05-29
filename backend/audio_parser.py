@@ -25,6 +25,10 @@ def parse_audio(file_path: str) -> list[NoteEvent]:
     _model_output, _midi_data, note_events = predict(
         file_path,
         ICASSP_2022_MODEL_PATH,
+        onset_threshold=0.6,       # default 0.5 — higher = fewer false onsets
+        frame_threshold=0.4,       # default 0.3 — higher = less note fragmentation
+        minimum_note_length=150,   # default ~128ms — discard shorter spurious notes
+        melodia_trick=False,       # default True — can add harmonic/resonance artifacts
     )
 
     notes: list[NoteEvent] = []
