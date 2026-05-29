@@ -16,6 +16,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playbackActive, setPlaybackActive] = useState(false);
   const [playbackComplete, setPlaybackComplete] = useState(false);
 
   const audioRef = useRef(null);
@@ -36,7 +37,7 @@ export default function App() {
   const activeHighlightMap = useMemo(() => {
     if (!results || !results.notes) return null;
 
-    if (isPlaying) {
+    if (playbackActive && !playbackComplete) {
       const map = {};
       const t = currentTime;
       const playedNotes = results.played_notes || [];
@@ -65,7 +66,7 @@ export default function App() {
 
     // Static mode: show all reference notes colored by status
     return null;
-  }, [results, currentTime, isPlaying]);
+  }, [results, currentTime, playbackActive, playbackComplete]);
 
   // --- requestAnimationFrame loop ---
   useEffect(() => {
@@ -100,6 +101,7 @@ export default function App() {
     setError(null);
     setResults(null);
     setPlaybackComplete(false);
+    setPlaybackActive(false);
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
@@ -139,6 +141,7 @@ export default function App() {
 
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
+        setPlaybackActive(false);
         setPlaybackComplete(true);
         setCurrentTime(audio.duration || 0);
       });
@@ -149,6 +152,7 @@ export default function App() {
       setDuration(audio.duration);
     }
 
+    setPlaybackActive(true);
     audio.play().then(() => {
       setIsPlaying(true);
       setPlaybackComplete(false);
