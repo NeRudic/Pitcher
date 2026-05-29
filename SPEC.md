@@ -26,7 +26,7 @@
 - Basic Pitch (Spotify) — audio → ноты
 
 **Frontend**
-- Vanilla JS / React — UI + piano keyboard
+- React — UI + piano keyboard
 - Web Audio API + Pitchfinder — real-time подсветка с микрофона
 
 ## Tolerance Threshold
