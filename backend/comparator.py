@@ -127,4 +127,5 @@ def build_comparison_summary(
         "total_played_notes": len(played),
         **counts,
         "notes": note_results,
+        "played_notes": played,
     }

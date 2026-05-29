@@ -36,22 +36,34 @@ export default function App() {
   const activeHighlightMap = useMemo(() => {
     if (!results || !results.notes) return null;
 
-    // During playback, only highlight notes active at currentTime
     if (isPlaying) {
       const map = {};
       const t = currentTime;
+      const playedNotes = results.played_notes || [];
+      const comparisons = results.notes;
 
-      for (const note of results.notes) {
-        // Reference notes (correct, late, early, missed)
-        if (note.reference_start >= 0 && note.reference_start <= t && note.reference_end >= t) {
-          map[note.reference_pitch] = note.status;
+      // Build a lookup: key = "pitch:start_time" → comparison result
+      const matchLookup = {};
+      for (const c of comparisons) {
+        if (c.played_pitch != null && c.played_start != null) {
+          const key = `${c.played_pitch}:${c.played_start.toFixed(3)}`;
+          matchLookup[key] = c.status;
+        }
+      }
+
+      // Show PLAYED notes active at currentTime
+      for (const pn of playedNotes) {
+        if (pn.start_time <= t && pn.end_time >= t) {
+          const key = `${pn.pitch}:${pn.start_time.toFixed(3)}`;
+          // Matched → use comparison status. Unmatched → "wrong"
+          map[pn.pitch] = matchLookup[key] || 'wrong';
         }
       }
 
       return Object.keys(map).length > 0 ? map : {};
     }
 
-    // Static mode: show all notes colored (PianoKeyboard builds its own map)
+    // Static mode: show all reference notes colored by status
     return null;
   }, [results, currentTime, isPlaying]);
 

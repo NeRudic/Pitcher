@@ -32,6 +32,7 @@ class ComparisonResponse(BaseModel):
     early: int
     missed: int
     notes: list[NoteComparisonResult]
+    played_notes: list[NoteEvent] = []  # raw played notes for playback mode
 
 
 class ErrorResponse(BaseModel):
