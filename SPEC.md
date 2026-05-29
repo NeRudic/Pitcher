@@ -30,7 +30,7 @@
 - Web Audio API + Pitchfinder — real-time подсветка с микрофона
 
 ## Tolerance Threshold
-- Pitch: ±1 полутон
+- Pitch: ±0.5 полутона (четверть тона)
 - Timing: ±100ms
 
 ## Playback Mode

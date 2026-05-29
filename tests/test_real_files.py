@@ -91,7 +91,7 @@ def test_reference_sorted_by_time():
 
 
 def test_reference_has_four_chords():
-    """Reference has 4 chord onsets: 0.0, 1.667, 3.333, 5.0 seconds."""
+    """Reference has 5 distinct note onset times: 0.0, 1.667, 3.333, 4.583, 5.0."""
     onsets = sorted(set(round(n.start_time, 3) for n in REFERENCE))
     expected = [0.0, 1.667, 3.333, 4.583, 5.0]
     for exp in expected:

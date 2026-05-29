@@ -8,7 +8,7 @@ Highlights missed, wrong, late, and early notes on a virtual piano keyboard.
 - Upload audio recording (.wav/.mp3) + reference MIDI (.mid)
 - Automatic note extraction and comparison
 - Visual keyboard highlighting: correct / wrong / late / early / missed
-- Tolerance: ±1 semitone pitch, ±100ms timing
+- Tolerance: ±0.5 semitone pitch (quarter-tone), ±100ms timing
 
 ## Tech Stack
 

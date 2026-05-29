@@ -8,6 +8,7 @@ Usage:
 
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -43,29 +44,41 @@ def main() -> None:
 
     # -- Start backend -------------------------------------------------------
     print("[1/2] Starting backend  (http://localhost:8000) ...")
+    # Redirect backend output to a temp file — avoids PIPE-buffer deadlock
+    # while still letting us show the output on failure.
+    backend_log = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8", errors="replace"
+    )
     backend = subprocess.Popen(
         [
             sys.executable, "-m", "uvicorn", "main:app",
             "--host", "0.0.0.0", "--port", "8000",
         ],
         cwd=str(BACKEND_DIR),
+        stdout=backend_log,
         stderr=subprocess.STDOUT,
-        stdout=subprocess.PIPE,
     )
 
     if not wait_for_url(BACKEND_URL, "backend"):
         print("ERROR: Backend did not start within 60 s.")
+        backend_log.close()
         # Print captured backend output to help diagnose the problem
         try:
-            out, _ = backend.communicate(timeout=2)
-            if out:
+            log_path = Path(backend_log.name)
+            if log_path.exists() and log_path.stat().st_size > 0:
                 print("--- Backend output ---")
-                print(out.decode(errors="replace"))
+                print(log_path.read_text(encoding="utf-8", errors="replace"))
                 print("----------------------")
         except Exception:
             pass
         backend.kill()
         sys.exit(1)
+    backend_log.close()
+    # Clean up the log file now that the backend is healthy
+    try:
+        Path(backend_log.name).unlink(missing_ok=True)
+    except Exception:
+        pass
     print("  Backend is ready.")
 
     # -- Start frontend ------------------------------------------------------

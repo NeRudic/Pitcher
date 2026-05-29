@@ -65,14 +65,22 @@ async def compare_recordings(
 
     # -- Validate MIDI file -------------------------------------------------
     if midi.content_type and midi.content_type not in ALLOWED_MIDI_TYPES:
-        # Also accept unknown/empty content types — browsers are inconsistent
-        # with MIDI MIME types. Fall back to extension check.
+        # Known but unsupported content type — reject unless extension is MIDI.
         midi_ext = _get_suffix(midi.filename, "")
         if midi_ext not in (".mid", ".midi"):
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported MIDI type: {midi.content_type}. "
                        f"Allowed: {', '.join(ALLOWED_MIDI_TYPES)}",
+            )
+    elif not midi.content_type:
+        # Browsers often omit Content-Type for MIDI files — fall back to
+        # extension check so that non-MIDI files don't slip through.
+        midi_ext = _get_suffix(midi.filename, "")
+        if midi_ext not in (".mid", ".midi"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown file type. Please upload a .mid or .midi file.",
             )
 
     # -- Save uploaded files to temp directory ------------------------------
