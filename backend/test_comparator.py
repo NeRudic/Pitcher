@@ -90,6 +90,30 @@ def test_pitch_out_of_tolerance():
     print("[PASS] test_pitch_out_of_tolerance passed")
 
 
+def test_quarter_tone_tolerance():
+    """Quarter-tone (0.5 semitone) should match, 0.6 should not."""
+    reference = [
+        NoteEvent(pitch=60.0, start_time=1.0, end_time=2.0, velocity=80),  # C4
+    ]
+    # 0.5 semitones off — within tolerance
+    played_in = [
+        NoteEvent(pitch=60.5, start_time=1.02, end_time=1.98),
+    ]
+    results = compare_notes(reference, played_in)
+    assert len(results) == 1
+    assert results[0].status == "correct", f"0.5 should match, got {results[0].status}"
+
+    # 0.6 semitones off — outside tolerance
+    played_out = [
+        NoteEvent(pitch=60.6, start_time=1.02, end_time=1.98),
+    ]
+    results = compare_notes(reference, played_out)
+    assert len(results) == 1
+    assert results[0].status == "missed", f"0.6 should miss, got {results[0].status}"
+
+    print("[PASS] test_quarter_tone_tolerance passed")
+
+
 def test_multiple_notes():
     """Complex scenario with multiple notes and mixed results."""
     reference = [
@@ -149,6 +173,7 @@ if __name__ == "__main__":
     test_early_note()
     test_pitch_tolerance()
     test_pitch_out_of_tolerance()
+    test_quarter_tone_tolerance()
     test_multiple_notes()
     test_summary_counts()
     print("\nAll tests passed!")

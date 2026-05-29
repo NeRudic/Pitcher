@@ -1,7 +1,7 @@
 """Configuration constants for the Piano Performance Analyzer."""
 
 # Tolerance thresholds for note comparison
-PITCH_TOLERANCE_SEMITONES = 0  # exact pitch match only
+PITCH_TOLERANCE_SEMITONES = 0.5  # quarter-tone tolerance (for fretless instruments)
 TIMING_TOLERANCE_MS = 100      # ±100 milliseconds
 
 # File constraints

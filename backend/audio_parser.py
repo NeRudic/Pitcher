@@ -32,7 +32,7 @@ def parse_audio(file_path: str) -> list[NoteEvent]:
     # In Basic Pitch 0.4.0, note_events is a list of tuples:
     # (start_time_sec, end_time_sec, pitch_midi, amplitude, pitch_bend)
     for start, end, pitch, amplitude, _bend in note_events:
-        pitch = int(pitch)
+        pitch = float(pitch)
         if MIDI_NOTE_MIN <= pitch <= MIDI_NOTE_MAX:
             notes.append(NoteEvent(
                 pitch=pitch,
