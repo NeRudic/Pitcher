@@ -12,7 +12,8 @@ ALLOWED_MIDI_TYPES = ["audio/midi", "audio/mid", "audio/x-midi", "application/x-
 
 # Basic Pitch artifact filter — notes below this amplitude are treated as
 # false-positive detections and dropped before comparison.
-MIN_AMPLITUDE = 0.1
+MIN_AMPLITUDE = 0.25  # raised from 0.1 — closer to Basic Pitch's frame_threshold (0.3)
+# to filter out harmonic over-detections and low-confidence artifacts
 
 # Piano note range (standard 88-key piano)
 MIDI_NOTE_MIN = 21  # A0
