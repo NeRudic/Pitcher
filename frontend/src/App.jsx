@@ -43,21 +43,27 @@ export default function App() {
       const playedNotes = results.played_notes || [];
       const comparisons = results.notes;
 
-      // Build a lookup: key = "pitch:start_time" → comparison result
-      const matchLookup = {};
+      // Build a set of matched played-note identifiers from comparisons.
+      // Only notes that have a match in the comparison results are shown —
+      // unmatched played notes (Basic Pitch artifacts) are ignored.
+      const matchedKeys = new Set();
+      const statusByKey = {};
       for (const c of comparisons) {
         if (c.played_pitch != null && c.played_start != null) {
           const key = `${c.played_pitch}:${c.played_start.toFixed(3)}`;
-          matchLookup[key] = c.status;
+          matchedKeys.add(key);
+          statusByKey[key] = c.status;
         }
       }
 
-      // Show PLAYED notes active at currentTime
+      // Show only MATCHED played notes active at currentTime
       for (const pn of playedNotes) {
         if (pn.start_time <= t && pn.end_time >= t) {
           const key = `${pn.pitch}:${pn.start_time.toFixed(3)}`;
-          // Matched → use comparison status. Unmatched → "wrong"
-          map[pn.pitch] = matchLookup[key] || 'wrong';
+          if (matchedKeys.has(key)) {
+            map[pn.pitch] = statusByKey[key];
+          }
+          // Unmatched → skip (Basic Pitch artifact, not a real wrong note)
         }
       }
 
