@@ -233,6 +233,74 @@ body {
   font-size: 0.9rem;
 }
 
+/* --- Playback Controls --------------------------------------------- */
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px 28px;
+  border: 1px solid #2a2a4a;
+}
+
+.play-btn {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #6a6aff, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.play-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.play-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.time-display {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #2a2a4a;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar:hover {
+  height: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6a6aff, #8b5cf6);
+  border-radius: 4px;
+  transition: width 0.05s linear;
+  min-width: 0;
+}
+
 /* --- Piano Keyboard ----------------------------------------------- */
 .piano-container {
   background: #1a1a2e;

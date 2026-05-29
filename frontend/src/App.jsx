@@ -1,18 +1,111 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import FileUpload from './components/FileUpload';
 import PianoKeyboard from './components/PianoKeyboard';
 import ResultsPanel from './components/ResultsPanel';
+import PlaybackControls from './components/PlaybackControls';
 import { compareRecordings } from './api/client';
 
 export default function App() {
+  // --- Comparison state ---
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // --- Audio / Playback state ---
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playbackComplete, setPlaybackComplete] = useState(false);
+
+  const audioRef = useRef(null);
+  const rafRef = useRef(null);
+
+  // --- Cleanup audio on unmount ---
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  // --- Compute active notes at currentTime for playback ---
+  const activeHighlightMap = useMemo(() => {
+    if (!results || !results.notes) return null;
+
+    // During playback, only highlight notes active at currentTime
+    if (isPlaying) {
+      const map = {};
+      const t = currentTime;
+
+      for (const note of results.notes) {
+        // Reference notes (correct, late, early, missed)
+        if (note.reference_start >= 0 && note.reference_start <= t && note.reference_end >= t) {
+          map[note.reference_pitch] = note.status;
+        }
+        // Wrong notes (played, no reference) — use played timing
+        if (note.status === 'wrong' && note.played_start >= 0 && note.played_start <= t && note.reference_end >= t) {
+          // reference_end is -1 for wrong notes, we approximate end = played_start + 0.5s
+          const wrongEnd = (note.reference_end > 0) ? note.reference_end : note.played_start + 0.5;
+          if (note.played_start <= t && wrongEnd >= t) {
+            map[note.played_pitch] = note.status;
+          }
+        }
+      }
+
+      return Object.keys(map).length > 0 ? map : {};
+    }
+
+    // Static mode: show all notes colored (PianoKeyboard builds its own map)
+    return null;
+  }, [results, currentTime, isPlaying]);
+
+  // --- requestAnimationFrame loop ---
+  useEffect(() => {
+    if (!isPlaying || !audioRef.current) return;
+
+    const tick = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      setCurrentTime(audio.currentTime);
+
+      if (audio.ended || audio.paused) {
+        if (audio.ended) {
+          setIsPlaying(false);
+          setPlaybackComplete(true);
+        }
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [isPlaying]);
+
+  // --- Handlers ---
   const handleUpload = async (audioFile, midiFile) => {
     setLoading(true);
     setError(null);
     setResults(null);
+    setPlaybackComplete(false);
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+
+    // Revoke old URL if exists
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+
+    // Create object URL for local playback
+    const url = URL.createObjectURL(audioFile);
+    setAudioUrl(url);
 
     try {
       const data = await compareRecordings(audioFile, midiFile);
@@ -23,6 +116,69 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  const handlePlay = useCallback(() => {
+    if (!audioUrl) return;
+
+    // Create audio element on first play or reuse
+    if (!audioRef.current || audioRef.current.src !== audioUrl) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+
+      audio.addEventListener('loadedmetadata', () => {
+        setDuration(audio.duration);
+      });
+
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setPlaybackComplete(true);
+        setCurrentTime(audio.duration || 0);
+      });
+    }
+
+    const audio = audioRef.current;
+    if (audio.readyState >= 1) {
+      setDuration(audio.duration);
+    }
+
+    audio.play().then(() => {
+      setIsPlaying(true);
+      setPlaybackComplete(false);
+    }).catch(() => {
+      setIsPlaying(false);
+    });
+  }, [audioUrl]);
+
+  const handlePause = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsPlaying(false);
+  }, []);
+
+  const handleSeek = useCallback((time) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+    setCurrentTime(time);
+  }, []);
+
+  const handleRestart = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+    setCurrentTime(0);
+    setPlaybackComplete(false);
+    handlePlay();
+  }, [handlePlay]);
+
+  // --- Derived state ---
+  const showResults = playbackComplete && results;
+  const showKeyboard = results && !loading;
 
   return (
     <div className="app">
@@ -45,11 +201,35 @@ export default function App() {
           </div>
         )}
 
-        {results && (
+        {/* Playback controls — shown after successful comparison */}
+        {results && !loading && (
+          <PlaybackControls
+            audioUrl={audioUrl}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeek={handleSeek}
+            onRestart={handleRestart}
+            disabled={!audioUrl}
+            playbackComplete={playbackComplete}
+          />
+        )}
+
+        {/* Results — shown after playback completes */}
+        {showResults && (
           <section className="results-section">
             <ResultsPanel results={results} />
-            <PianoKeyboard noteResults={results.notes || []} />
           </section>
+        )}
+
+        {/* Piano keyboard */}
+        {showKeyboard && (
+          <PianoKeyboard
+            noteResults={results.notes || []}
+            highlightMap={activeHighlightMap}
+          />
         )}
       </main>
     </div>
