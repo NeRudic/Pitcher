@@ -32,3 +32,10 @@
 ## Tolerance Threshold
 - Pitch: ±1 полутон
 - Timing: ±100ms
+
+## Playback Mode
+- Кнопка Play запускает воспроизведение audio файла
+- requestAnimationFrame двигает current_time синхронно с аудио
+- На каждом кадре: найти ноты где start <= current_time <= end
+- Подсветить клавиши: зелёный = correct, красный = wrong
+- По завершении — показать итоговую статистику
