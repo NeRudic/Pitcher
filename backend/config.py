@@ -1,7 +1,7 @@
 """Configuration constants for the Piano Performance Analyzer."""
 
 # Tolerance thresholds for note comparison
-PITCH_TOLERANCE_SEMITONES = 1  # ±1 semitone
+PITCH_TOLERANCE_SEMITONES = 0  # exact pitch match only
 TIMING_TOLERANCE_MS = 100      # ±100 milliseconds
 
 # File constraints

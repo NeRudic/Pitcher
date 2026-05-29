@@ -61,7 +61,7 @@ def test_early_note():
 
 
 def test_pitch_tolerance():
-    """A note within ±1 semitone should still match."""
+    """A note off by 1 semitone should NOT match (strict pitch)."""
     reference = [
         NoteEvent(pitch=60, start_time=1.0, end_time=2.0, velocity=80),  # C4
     ]
@@ -70,8 +70,7 @@ def test_pitch_tolerance():
     ]
     results = compare_notes(reference, played)
     assert len(results) == 1
-    assert results[0].status == "correct", f"Expected correct, got {results[0].status}"
-    assert results[0].played_pitch == 61
+    assert results[0].status == "missed", f"Expected missed, got {results[0].status}"
     print("[PASS] test_pitch_tolerance passed")
 
 
